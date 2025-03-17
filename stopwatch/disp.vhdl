@@ -24,13 +24,8 @@ architecture display of display is
 begin
     led7_an_o <= STD_LOGIC_VECTOR(selected);
 
-    process (clk_i, rst_i) begin
-        if rst_i = '1'
-        then
-            counter <= 0;
-            selected <= "0001";
-            led7_seg_o <= "00000000";
-        elsif rising_edge(clk_i)
+    process (clk_i) begin
+        if rising_edge(clk_i)
         then
             case selected is
 			    when "0001" => led7_seg_o <= digit_0;
