@@ -8,7 +8,7 @@ end entity;
 
 architecture tb_led_disp of tb_led_disp is
     component led_disp is
-        generic ( SWAP_INERVAL : NATURAL := 100_000 );
+        generic ( SWAP_INTERVAL : NATURAL := 100_000 );
         port (
             clk_i : in STD_LOGIC;
             btn_i : in STD_LOGIC_VECTOR (3 downto 0);
@@ -25,7 +25,7 @@ architecture tb_led_disp of tb_led_disp is
     signal led7_seg_o : STD_LOGIC_VECTOR (7 downto 0);
 begin
     uut : led_disp
-    generic map ( SWAP_INERVAL => 10 )
+    generic map ( SWAP_INTERVAL => 10 )
     port map (
         clk_i      => clk_i,
         btn_i      => btn_i,

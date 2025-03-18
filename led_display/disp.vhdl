@@ -22,7 +22,7 @@ architecture display of display is
     alias digit_1 : STD_LOGIC_VECTOR (7 downto 0) is digit_i(15 downto 8 );
     alias digit_0 : STD_LOGIC_VECTOR (7 downto 0) is digit_i(7  downto 0 );
 begin
-    led7_an_o <= STD_LOGIC_VECTOR(selected);
+    led7_an_o <= not STD_LOGIC_VECTOR(selected);
 
     process (clk_i, rst_i) begin
         if rst_i = '1'
