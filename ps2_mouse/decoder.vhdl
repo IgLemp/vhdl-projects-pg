@@ -2,65 +2,43 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.NUMERIC_STD.all;
 
-entity driver is
-    generic ( CLOCK_CONVERSION : NATURAL := 30_000 );
+entity decoder is
     port (
         ps2_clk_i  : in STD_LOGIC;
         ps2_data_i : in STD_LOGIC;
-        x_position    : out SIGNED (15 downto 0);
-        y_position    : out SIGNED (15 downto 0);
-        roll_position : out SIGNED (15 downto 0);
-        button_left   : out STD_LOGIC;
-        button_right  : out STD_LOGIC
+
+        frame_commit_o : out STD_LOGIC;
+
+        dx_pos_o : out SIGNED (8 downto 0);
+        dy_pos_o : out SIGNED (8 downto 0);
+        dr_pos_o : out SIGNED (3 downto 0);
+        btn_left_o  : out STD_LOGIC;
+        btn_right_o : out STD_LOGIC
     );
 end entity;
 
-architecture driver of driver is
+architecture decoder of decoder is
     type FRAME_T is (HEAD, X_MOV, Y_MOV, TAIL);
-    type ERROR_T is (OK, SYNCH_FUCKED, FRAME_FUCKED);
 
     signal counter : UNSIGNED (3 downto 0);
     signal frame_bits : STD_LOGIC_VECTOR (7 downto 0);
     signal frame_position : FRAME_T := HEAD;
-    signal error_state: ERROR_T := OK;
-
-    --signal synch_buffer : UNSIGNED (10 downto 0) := (others => '0');
 
     -- Processing data
-    signal x_negative : STD_LOGIC := '0';
-    signal y_negative : STD_LOGIC := '0';
+    signal x_neg : STD_LOGIC := '0';
+    signal y_neg : STD_LOGIC := '0';
 
-    -- Outputed data
-    signal x_position    : SIGNED (15 downto 0) := (others => '0');
-    signal y_position    : SIGNED (15 downto 0) := (others => '0');
-    signal roll_position : SIGNED (15 downto 0) := (others => '0');
-    signal button_left  : STD_LOGIC := '0';
-    signal button_right : STD_LOGIC := '0';
-
+    -- Internal state data
+    signal dx_pos : SIGNED (8 downto 0);
+    signal dy_pos : SIGNED (8 downto 0);
+    signal dr_pos : SIGNED (3 downto 0);
+    signal btn_left  : STD_LOGIC;
+    signal btn_right : STD_LOGIC;
 begin
     process (ps2_clk_i) begin
         if falling_edge(ps2_clk_i) then
-            -- Desynch checks, hopefully doesn't happen
-            if counter =  0 then if ps2_data_i /= '0' then error_state <= SYNCH_FUCKED; end if; end if;
-            if counter = 10 then if ps2_data_i /= '1' then error_state <= SYNCH_FUCKED; end if; end if;
-
-            if frame_position = HEAD and counter = 4 then
-                if ps2_data_i /= '1' then error_state <= SYNCH_FUCKED; end if;
-            end if;
-
-            if frame_position = TAIL and (counter = 7 or counter = 8) then
-                if ps2_data_i /= '0' then error_state <= SYNCH_FUCKED; end if;
-            end if;
-
-            -- Check for parity, mouse sends 1 if yes, xor returns 1 if no
-            if counter = 9 and (xor frame_bits = ps2_data_i) then error_state <= FRAME_FUCKED; end if;
-
-            -- Save frame bits for fursther processing at the end
-            if counter > 0 and counter < 9 then
-                frame_bits(TO_INTEGER(counter - 1)) <= ps2_data_i;
-            end if;
-
             -- Swap to next frame
+            -- NOTICE: This logic runs on per frame basis!!!
             if counter = 10 then
                 counter <= (others => '0');
                 case frame_position is
@@ -70,20 +48,32 @@ begin
                     when TAIL  => frame_position <= HEAD;
                 end case;
 
-                -- We won't handle the posibility of fucked frames
+                -- We won't handle the posibility of screwed frames
                 case frame_position is
                     when HEAD =>
-                        button_left  <= frame_bits(0);
-                        button_right <= frame_bits(1);
-                        x_negative <= frame_bits(4);
-                        y_negative <= frame_bits(5);
-                    when X_MOV =>
-                        x_position <= x_position + SIGNED(x_negative & frame_bits);
-                    when Y_MOV =>
-                        y_position <= y_position + SIGNED(y_negative & frame_bits);
-                    when TAIL =>
-                        roll_position <= roll_position + SIGNED(frame_bits(3 downto 0));
+                        btn_left  <= frame_bits(0);
+                        btn_right <= frame_bits(1);
+                        x_neg <= frame_bits(4);
+                        y_neg <= frame_bits(5);
+                    when X_MOV => dx_pos <= SIGNED(x_neg & frame_bits);
+                    when Y_MOV => dy_pos <= SIGNED(y_neg & frame_bits);
+                    when TAIL => dr_pos <= SIGNED(frame_bits(3 downto 0));
                 end case;
+            end if;
+
+            -- Commit buffers to output
+            if (frame_position = TAIL) and (counter = 10) then
+                dx_pos_o <= dx_pos;
+                dy_pos_o <= dy_pos;
+                dr_pos_o <= dr_pos;
+                btn_left_o  <= btn_left;
+                btn_right_o <= btn_right;
+            end if;
+
+            -- Signal that data has been set
+            if (frame_position = HEAD) and (counter = 0)
+                then frame_commit_o <= '1';
+                else frame_commit_o <= '0';
             end if;
         end if;
     end process;
