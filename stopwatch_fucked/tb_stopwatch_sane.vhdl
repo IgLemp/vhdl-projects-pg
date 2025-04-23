@@ -11,7 +11,7 @@ architecture tb_stopwatch_sane of tb_stopwatch_sane is
     component stopwatch is
         generic (
             SWAP_INTERVAL   : NATURAL := 100_000;
-            TEN_MILLI_CYCLE : NATURAL := 1_000_000
+            TEN_MILLI_CYCLE : NATURAL := 500_000
         );
         port (
             clk_i : in STD_LOGIC;
@@ -31,7 +31,7 @@ begin
     uut : stopwatch
     generic map (
         SWAP_INTERVAL   => 10,
-        TEN_MILLI_CYCLE => 1
+        TEN_MILLI_CYCLE => 50
     )
     port map(
         clk_i               => clk_i,
@@ -41,7 +41,7 @@ begin
         led7_seg_o          => led7_seg_o
     );
 
-    clk_i <= '1' after 5 ns when clk_i = '0' else '0' after 5 ns;
+    clk_i <= '1' after 10 ns when clk_i = '0' else '0' after 10 ns;
 
     tb : process is
     begin

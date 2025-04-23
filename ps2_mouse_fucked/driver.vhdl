@@ -30,7 +30,6 @@ architecture driver of driver is
 
     -- Internal state data
     signal pipeline_state : PIPELINE_STATE_T := IDLE;
-    signal frame_commit_last : STD_LOGIC := '0';
 
     signal x_pos : SIGNED (15 downto 0) := (others => '0');
     signal r_pos : SIGNED (15 downto 0) := (others => '0');
@@ -41,20 +40,20 @@ architecture driver of driver is
 
     -- Outputed data
     signal selected_digit : UNSIGNED (3 downto 0) := "1000";
-    alias digit_0_o : STD_LOGIC_VECTOR (7 downto 0) is digit_o (31 downto 24);
-    alias digit_1_o : STD_LOGIC_VECTOR (7 downto 0) is digit_o (23 downto 16);
-    alias digit_2_o : STD_LOGIC_VECTOR (7 downto 0) is digit_o (15 downto  8);
-    alias digit_3_o : STD_LOGIC_VECTOR (7 downto 0) is digit_o (7  downto  0);
+    alias digit_0_o : UNSIGNED (3 downto 0) is digit_o (31 downto 24);
+    alias digit_1_o : UNSIGNED (3 downto 0) is digit_o (23 downto 16);
+    alias digit_2_o : UNSIGNED (3 downto 0) is digit_o (15 downto  8);
+    alias digit_3_o : UNSIGNED (3 downto 0) is digit_o (7  downto  0);
 
-    signal digit_0 : UNSIGNED (3 downto 0) := (others => '0');
-    signal digit_1 : UNSIGNED (3 downto 0) := (others => '0');
-    signal digit_2 : UNSIGNED (3 downto 0) := (others => '0');
-    signal digit_3 : UNSIGNED (3 downto 0) := (others => '0');
+    signal digit_0 : UNSIGNED (3 downto 0);
+    signal digit_1 : UNSIGNED (3 downto 0);
+    signal digit_2 : UNSIGNED (3 downto 0);
+    signal digit_3 : UNSIGNED (3 downto 0);
 begin
-    digit_0_o(7 downto 1) <= (short_to_seg(digit_0)(7 downto 1));
-    digit_1_o(7 downto 1) <= (short_to_seg(digit_1)(7 downto 1));
-    digit_2_o(7 downto 1) <= (short_to_seg(digit_2)(7 downto 1));
-    digit_3_o(7 downto 1) <= (short_to_seg(digit_3)(7 downto 1));
+    digit_0_o <= short_to_seg(digit_0)(7 downto 1);
+    digit_1_o <= short_to_seg(digit_1)(7 downto 1);
+    digit_2_o <= short_to_seg(digit_2)(7 downto 1);
+    digit_3_o <= short_to_seg(digit_3)(7 downto 1);
 
     digit_0_o(0) <= '0' when selected_digit(0) = '1' else '1';
     digit_1_o(0) <= '0' when selected_digit(1) = '1' else '1';
@@ -63,9 +62,7 @@ begin
 
     process (clk_i) begin
         if falling_edge(clk_i) then
-            frame_commit_last <= frame_commit_i;
-
-            if frame_commit_last = '1' and frame_commit_i = '0' then pipeline_state <= MOVE; end if;
+            if frame_commit_i = '1' then pipeline_state <= MOVE; end if;
 
             -- Swap states
             case pipeline_state is
@@ -75,10 +72,8 @@ begin
             end case;
 
             if pipeline_state = MOVE then
-                if edit_lock = '0' then
-                    x_pos <= x_pos + dx_pos_i;
-                    r_pos <= r_pos + dr_pos_i;
-                end if;
+                x_pos <= x_pos + dx_pos_i;
+                r_pos <= r_pos + dr_pos_i;
 
                 btn_left_last_state <= btn_left;
                 btn_left <= btn_left_i;
@@ -86,30 +81,27 @@ begin
 
             if pipeline_state = CALC then
                 if edit_lock = '0' then
-                    if (x_pos >   HALF_RANGE ) then
-                        x_pos <= TO_SIGNED(-HALF_RANGE + 1, 16);
-                        if (selected_digit /= "0001") then selected_digit <= ROTATE_RIGHT(selected_digit, 1); end if;
+                    if (x_pos >   HALF_RANGE ) and (selected_digit /= "0001")
+                        then x_pos <= TO_SIGNED(-HALF_RANGE, 16); ROTATE_RIGHT(selected_digit, 1);
                     end if;
 
-                    if (x_pos < (-HALF_RANGE)) then
-                        x_pos <= TO_SIGNED( HALF_RANGE - 1, 16);
-                        if (selected_digit /= "1000") then selected_digit <= ROTATE_LEFT (selected_digit, 1); end if;
+                    if (x_pos < (-HALF_RANGE)) and (selected_digit /= "1000")
+                        then x_pos <= TO_SIGNED( HALF_RANGE, 16); ROTATE_LEFT (selected_digit, 1);
                     end if;
 
                     case selected_digit is
                         when "1000" =>
-                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_3 <= digit_3 + 1; end if;
-                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_3 <= digit_3 - 1; end if;
-                        when "0100" =>
-                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_2 <= digit_2 + 1; end if;
-                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_2 <= digit_2 - 1; end if;
-                        when "0010" =>
-                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_1 <= digit_1 + 1; end if;
-                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_1 <= digit_1 - 1; end if;
-                        when "0001" =>
                             if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_0 <= digit_0 + 1; end if;
                             if (r_pos < 0         ) then r_pos <= (others => '0'); digit_0 <= digit_0 - 1; end if;
-                        when others =>
+                        when "0100" =>
+                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_1 <= digit_1 + 1; end if;
+                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_1 <= digit_1 - 1; end if;
+                        when "0010" =>
+                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_2 <= digit_2 + 1; end if;
+                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_2 <= digit_2 - 1; end if;
+                        when "0001" =>
+                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_3 <= digit_3 + 1; end if;
+                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_3 <= digit_3 - 1; end if;
                     end case;
                 end if;
 

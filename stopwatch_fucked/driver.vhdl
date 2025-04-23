@@ -4,7 +4,7 @@ use IEEE.NUMERIC_STD.all;
 use work.utils.all;
 
 entity driver is
-    generic ( TEN_MILLI_CYCLE : NATURAL := 1_000_000 );
+    generic ( TEN_MILLI_CYCLE : NATURAL := 500_000 );
     port (
         clk_i : in STD_LOGIC;
         rst_i : in STD_LOGIC;
@@ -15,10 +15,9 @@ end entity;
 
 architecture driver of driver is
     type E_STATE is (START, STOP, RESET, OVERFLOW);
-    signal state  : E_STATE := RESET;
-    signal ticks  : NATURAL := 1;
-    signal t_lock : NATURAL := TEN_MILLI_CYCLE * 5;
-    signal b_lock : STD_LOGIC := '0';
+    signal state : E_STATE := RESET;
+    signal ticks : NATURAL := 1;
+    signal lock  : NATURAL := MILLI_CYCLE * 5;
 
     signal timer_ss : UNSIGNED (7 downto 0) := (others => '0');
     signal timer_dd : UNSIGNED (7 downto 0) := (others => '0');
@@ -29,10 +28,10 @@ architecture driver of driver is
     alias dd_minor : UNSIGNED (3 downto 0) is timer_dd (3 downto 0);
 begin
     with state select digit_o <=
-        (short_to_seg(ss_major) & short_to_seg(ss_minor) & short_to_seg(dd_major) & short_to_seg(dd_minor)) when START,
-        (short_to_seg(ss_major) & short_to_seg(ss_minor) & short_to_seg(dd_major) & short_to_seg(dd_minor)) when STOP,
-        (SEG_ZERO               & SEG_ZERO               & SEG_ZERO               & SEG_ZERO)               when RESET,
-        (SEG_DASH               & SEG_DASH               & SEG_DASH               & SEG_DASH)               when OVERFLOW;
+        (short_to_seg(ss_major), short_to_seg(ss_minor), short_to_seg(dd_major), short_to_seg(dd_minor)) when START,
+        (short_to_seg(ss_major), short_to_seg(ss_minor), short_to_seg(dd_major), short_to_seg(dd_minor)) when STOP,
+        (SEG_ZERO,               SEG_ZERO,               SEG_ZERO,               SEG_ZERO)               when RESET,
+        (SEG_DASH,               SEG_DASH,               SEG_DASH,               SEG_DASH)               when OVERFLOW;
     process (clk_i, rst_i) begin
         if rst_i = '1' then
             state <= RESET;
@@ -41,13 +40,11 @@ begin
             timer_dd <= (others => '0');
         elsif rising_edge(clk_i) then
             -- Tick states
-            if state = START                 then ticks  <= ticks  + 1; end if;
-            if t_lock /= TEN_MILLI_CYCLE * 5 then t_lock <= t_lock + 1; end if;
+            ticks <= ticks + 1 when state = START;
+            lock  <= lock  + 1 when lock /= MILLI_CYCLE * 50;
 
-            if start_stop_button_i = '1' then b_lock <= '1'; else b_lock <= '0'; end if;
-
-            if (start_stop_button_i = '1') and (b_lock = '0') and (t_lock = TEN_MILLI_CYCLE * 5) then
-                t_lock <= 1;
+            if (start_stop_button_i = '1') and (lock = MILLI_CYCLE * 50) then
+                lock <= 1;
                 case state is
                     when START    => state <= STOP;
                     when STOP     => state <= RESET; ticks <= 0; timer_dd <= (others => '0'); timer_ss <= (others => '0');
@@ -60,18 +57,18 @@ begin
             -- of internal buffers of the clock and output to display is
             -- handled by asynchronous combinatory logic above the process
             if state = START then
-                -- Assuming f = 10 MHz => T = 10 ns
-                if ticks = TEN_MILLI_CYCLE  then
+                -- Assuming f = 100 MHz => T = 10 ns
+                if ticks = MILLI_CYCLE  then
                     ticks <= 1;
                     -- Cascading BCD addition
-                    if    (ss_major = 5) and (ss_minor = 9) and (dd_major = 9) and (dd_minor = 9) then
+                    if    (ss_major = 5) and (ss_minor = 9) and (dd_major = 5) and (dd_minor = 9) then
                         state <= OVERFLOW;
-                    elsif                    (ss_minor = 9) and (dd_major = 9) and (dd_minor = 9) then
+                    elsif                    (ss_minor = 9) and (dd_major = 5) and (dd_minor = 9) then
                         ss_major <= ss_major + 1;
                         ss_minor <= (others => '0');
                         dd_major <= (others => '0');
                         dd_minor <= (others => '0');
-                    elsif                                       (dd_major = 9) and (dd_minor = 9) then
+                    elsif                                       (dd_major = 5) and (dd_minor = 9) then
                         ss_minor <= ss_minor + 1;
                         dd_major <= (others => '0');
                         dd_minor <= (others => '0');
