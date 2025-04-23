@@ -6,7 +6,7 @@ use work.utils.all;
 entity driver is
     generic ( DOTS_PER_MILLIM : NATURAL := 32 ); -- dots per millimeter
     port (
-    clk_i : in STD_LOGIC;
+        clk_i : in STD_LOGIC;
         frame_commit_i : in STD_LOGIC;
 
         dx_pos_i : in SIGNED (8 downto 0);
@@ -33,7 +33,7 @@ architecture driver of driver is
     signal frame_commit_last : STD_LOGIC := '0';
 
     signal x_pos : SIGNED (15 downto 0) := (others => '0');
-    signal r_pos : SIGNED (15 downto 0) := (others => '0');
+    signal y_pos : SIGNED (15 downto 0) := (others => '0');
     signal btn_left  : STD_LOGIC := '0';
 
     signal btn_left_last_state : STD_LOGIC := '0';
@@ -77,7 +77,7 @@ begin
             if pipeline_state = MOVE then
                 if edit_lock = '0' then
                     x_pos <= x_pos + dx_pos_i;
-                    r_pos <= r_pos + dr_pos_i;
+                    y_pos <= y_pos + dy_pos_i;
                 end if;
 
                 btn_left_last_state <= btn_left;
@@ -98,17 +98,17 @@ begin
 
                     case selected_digit is
                         when "1000" =>
-                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_3 <= digit_3 + 1; end if;
-                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_3 <= digit_3 - 1; end if;
+                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_3 <= digit_3 + 1; end if;
+                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_3 <= digit_3 - 1; end if;
                         when "0100" =>
-                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_2 <= digit_2 + 1; end if;
-                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_2 <= digit_2 - 1; end if;
+                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_2 <= digit_2 + 1; end if;
+                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_2 <= digit_2 - 1; end if;
                         when "0010" =>
-                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_1 <= digit_1 + 1; end if;
-                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_1 <= digit_1 - 1; end if;
+                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_1 <= digit_1 + 1; end if;
+                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_1 <= digit_1 - 1; end if;
                         when "0001" =>
-                            if (r_pos > SCRL_RANGE) then r_pos <= (others => '0'); digit_0 <= digit_0 + 1; end if;
-                            if (r_pos < 0         ) then r_pos <= (others => '0'); digit_0 <= digit_0 - 1; end if;
+                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_0 <= digit_0 + 1; end if;
+                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_0 <= digit_0 - 1; end if;
                         when others =>
                     end case;
                 end if;
