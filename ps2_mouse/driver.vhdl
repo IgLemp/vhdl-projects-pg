@@ -12,7 +12,6 @@ entity driver is
         dx_pos_i : in SIGNED (8 downto 0);
         dy_pos_i : in SIGNED (8 downto 0);
         dr_pos_i : in SIGNED (3 downto 0);
-
         btn_left_i  : in STD_LOGIC;
         btn_right_i : in STD_LOGIC;
 
