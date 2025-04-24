@@ -3,7 +3,7 @@ PHONY:
 	clean
 
 ps2_mouse:
-	nvc -a utils.vhdl display.vhdl decoder.vhdl driver.vhdl ps2_mouse.vhdl
+	nvc -a utils.vhdl display.vhdl decoder.vhdl driver.vhdl dbridge.vhdl ps2_mouse.vhdl
 	nvc -a tb_ps2_mouse.vhdl -e tb_ps2_mouse -r --wave
 
 clean:

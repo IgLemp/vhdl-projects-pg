@@ -56,10 +56,10 @@ architecture tb_ps2_mouse of tb_ps2_mouse is
         tail  := ("00" & "00" & STD_LOGIC_VECTOR(dr_pos));
 
         return (
-            '1' & xor_v(head)  & head  & '0' &
-            '1' & xor_v(x_mov) & x_mov & '0' &
+            '1' & xor_v(tail)  & tail  & '0' &
             '1' & xor_v(y_mov) & y_mov & '0' &
-            '1' & xor_v(tail)  & tail  & '0'
+            '1' & xor_v(x_mov) & x_mov & '0' &
+            '1' & xor_v(head)  & head  & '0'
         );
     end function;
 begin
@@ -79,52 +79,57 @@ begin
     tb : process is
         variable frame : STD_LOGIC_VECTOR (43 downto 0);
     begin
-        -- Null test
-        frame := make_frame("001111110", "011111111", "0011", '0', '0');
-        frame_s <= frame;
-        for i in 43 downto 0 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
+--        -- Null test
+--        frame := make_frame("000000000", "000000000", "0000", '0', '0');
+--        -- frame := make_frame("001111110", "011111111", "0011", '0', '0');
+--        frame_s <= frame;
+--        for i in 0 to 43 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
+
+        wait for 2 ns;
 
         -- Number: 0449
 
---        -- Second digit ---------------------------------------------------------------------------
---        -- mouse move
---        frame := make_frame(TO_SIGNED(511, 9), "0", "0", '0', '0');
---        for i in 3 to 0 loop
---            for i in 43 downto 0 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
---        end loop;
+        -- First digit ---------------------------------------------------------------------------
+        -- mouse move
+        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
+        
+        -- input number
+        -- ZERO
 
---        -- input number
---        frame := make_frame("0", "0", TO_SIGNED(15, 9), '0', '0');
---        for i in 1706 to 0 loop
---            for i in 43 downto 0 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
---        end loop;
+        -- Second digit ---------------------------------------------------------------------------
+        -- mouse move
+        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
 
---        -- Third digit ----------------------------------------------------------------------------
---        -- mouse move
---        frame := make_frame(TO_SIGNED(511, 9), "0", "0", '0', '0');
---        for i in 3 to 0 loop
---            for i in 43 downto 0 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
---        end loop;
+        -- input number
+        frame := make_frame("000000000", TO_SIGNED(45, 9), "0000", '0', '0');
+        for i in 3 to 0 loop
+            for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
+        end loop;
 
---        -- input number
---        frame := make_frame("0", "0", TO_SIGNED(15, 9), '0', '0');
---        for i in 1706 to 0 loop
---            for i in 43 downto 0 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
---        end loop;
+        -- Third digit ----------------------------------------------------------------------------
+        -- mouse move
+        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
 
---        -- Fourth digit ---------------------------------------------------------------------------
---        -- mouse move
---        frame := make_frame(TO_SIGNED(511, 9), "0", "0", '0', '0');
---        for i in 3 to 0 loop
---            for i in 43 downto 0 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
---        end loop;
+        -- input number
+        frame := make_frame("000000000", TO_SIGNED(45, 9), "0000", '0', '0');
+        for i in 3 to 0 loop
+            for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
+        end loop;
 
---        -- input number
---        frame := make_frame("0", "0", TO_SIGNED(15, 9), '0', '0');
---        for i in 3840 to 0 loop
---            for i in 43 downto 0 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
---        end loop;
+        -- Fourth digit ---------------------------------------------------------------------------
+        -- mouse move
+        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
 
---        finish;
+        -- input number
+        frame := make_frame("000000000", TO_SIGNED(45, 9), "0000", '0', '0');
+        for i in 8 to 0 loop
+            for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
+        end loop;
+
+        finish;
     end process;
 end architecture;

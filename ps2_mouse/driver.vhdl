@@ -23,7 +23,8 @@ architecture driver of driver is
     constant STEP_RANGE : NATURAL := DOTS_PER_MILLIM * 50; -- Cell range: 5 centimerers
     constant HALF_RANGE : NATURAL := STEP_RANGE / 2;       -- Half cell range
     constant FULL_RANGE : NATURAL := STEP_RANGE * 4;       -- Range from bottom to top cell
-    constant SCRL_RANGE : NATURAL := STEP_RANGE * 4;
+    constant SCRL_RANGE : NATURAL := STEP_RANGE / 4;
+    constant HCRL_RANGE : NATURAL := SCRL_RANGE / 2;
 
     type PIPELINE_STATE_T is (IDLE, MOVE, CALC);
 
@@ -55,10 +56,10 @@ begin
     digit_2_o(7 downto 1) <= (short_to_seg(digit_2)(7 downto 1));
     digit_3_o(7 downto 1) <= (short_to_seg(digit_3)(7 downto 1));
 
-    digit_0_o(0) <= '0' when selected_digit(0) = '1' else '1';
-    digit_1_o(0) <= '0' when selected_digit(1) = '1' else '1';
-    digit_2_o(0) <= '0' when selected_digit(2) = '1' else '1';
-    digit_3_o(0) <= '0' when selected_digit(3) = '1' else '1';
+    digit_0_o(0) <= '0' when selected_digit(0) = '1' and edit_lock = '0' else '1';
+    digit_1_o(0) <= '0' when selected_digit(1) = '1' and edit_lock = '0' else '1';
+    digit_2_o(0) <= '0' when selected_digit(2) = '1' and edit_lock = '0' else '1';
+    digit_3_o(0) <= '0' when selected_digit(3) = '1' and edit_lock = '0' else '1';
 
     process (clk_i) begin
         if falling_edge(clk_i) then
@@ -87,27 +88,27 @@ begin
                 if edit_lock = '0' then
                     if (x_pos >   HALF_RANGE ) then
                         x_pos <= TO_SIGNED(-HALF_RANGE + 1, 16);
-                        if (selected_digit /= "0001") then selected_digit <= ROTATE_RIGHT(selected_digit, 1); end if;
+                        if (selected_digit /= "1000") then selected_digit <= ROTATE_LEFT (selected_digit, 1); end if;                        
                     end if;
 
                     if (x_pos < (-HALF_RANGE)) then
                         x_pos <= TO_SIGNED( HALF_RANGE - 1, 16);
-                        if (selected_digit /= "1000") then selected_digit <= ROTATE_LEFT (selected_digit, 1); end if;
+                        if (selected_digit /= "0001") then selected_digit <= ROTATE_RIGHT(selected_digit, 1); end if;
                     end if;
 
                     case selected_digit is
                         when "1000" =>
-                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_3 <= digit_3 + 1; end if;
-                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_3 <= digit_3 - 1; end if;
+                            if (y_pos >  HCRL_RANGE) then y_pos <= (others => '0'); digit_3 <= digit_3 + 1; end if;
+                            if (y_pos < -HCRL_RANGE) then y_pos <= (others => '0'); digit_3 <= digit_3 - 1; end if;
                         when "0100" =>
-                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_2 <= digit_2 + 1; end if;
-                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_2 <= digit_2 - 1; end if;
+                            if (y_pos >  HCRL_RANGE) then y_pos <= (others => '0'); digit_2 <= digit_2 + 1; end if;
+                            if (y_pos < -HCRL_RANGE) then y_pos <= (others => '0'); digit_2 <= digit_2 - 1; end if;
                         when "0010" =>
-                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_1 <= digit_1 + 1; end if;
-                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_1 <= digit_1 - 1; end if;
+                            if (y_pos >  HCRL_RANGE) then y_pos <= (others => '0'); digit_1 <= digit_1 + 1; end if;
+                            if (y_pos < -HCRL_RANGE) then y_pos <= (others => '0'); digit_1 <= digit_1 - 1; end if;
                         when "0001" =>
-                            if (y_pos > SCRL_RANGE) then y_pos <= (others => '0'); digit_0 <= digit_0 + 1; end if;
-                            if (y_pos < 0         ) then y_pos <= (others => '0'); digit_0 <= digit_0 - 1; end if;
+                            if (y_pos >  HCRL_RANGE) then y_pos <= (others => '0'); digit_0 <= digit_0 + 1; end if;
+                            if (y_pos < -HCRL_RANGE) then y_pos <= (others => '0'); digit_0 <= digit_0 - 1; end if;
                         when others =>
                     end case;
                 end if;
