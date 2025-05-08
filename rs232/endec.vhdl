@@ -22,8 +22,8 @@ port (
 end entity;
 
 architecture endec of endec is
-    constant SEGMENT_COUNT : NATURAL := CLOCK_FREQENCY / BAUD_RATE;
-    constant QUARTER_COUNT : NATURAL := SEGMENT_COUNT / 4;
+    constant SEGMENT_LENGTH : NATURAL := CLOCK_FREQENCY / BAUD_RATE;
+    constant QUARTER_LENGTH : NATURAL := SEGMENT_LENGTH / 4;
     signal counter : NATURAL := 0;
 
     signal current_bit : UNSIGNED (3 downto 0);
@@ -68,7 +68,7 @@ begin
 
             -- Here we offset the counter by quarter segment length
             if state = START then
-                if counter = (SEGMENT_COUNT + QUARTER_COUNT) then
+                if counter = (SEGMENT_LENGTH + QUARTER_LENGTH) then
                     state <= WORKING;
                     counter <= 0;
                     current_bit <= current_bit + 1;
@@ -76,7 +76,7 @@ begin
             end if;
 
             if state = WORKING then
-                if counter = SEGMENT_COUNT then
+                if counter = SEGMENT_LENGTH then
                 end if;
             end if;
         end if;

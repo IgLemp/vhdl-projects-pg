@@ -79,28 +79,26 @@ begin
     tb : process is
         variable frame : STD_LOGIC_VECTOR (43 downto 0);
     begin
---        -- Null test
---        frame := make_frame("000000000", "000000000", "0000", '0', '0');
---        -- frame := make_frame("001111110", "011111111", "0011", '0', '0');
---        frame_s <= frame;
---        for i in 0 to 43 loop wait on ps2_clk_i; ps2_data_i <= frame(i); end loop;
-
-        wait for 2 ns;
+        wait for 4 ns;
 
         -- Number: 0449
 
         -- First digit ---------------------------------------------------------------------------
         -- mouse move
-        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        frame := make_frame(TO_SIGNED(255, 9), "000000000", "0000", '0', '0');
+        for x in 6  downto 0 loop
         for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
-        
+        end loop;
+
         -- input number
         -- ZERO
 
         -- Second digit ---------------------------------------------------------------------------
         -- mouse move
-        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        frame := make_frame(TO_SIGNED(255, 9), "000000000", "0000", '0', '0');
+        for x in 6  downto 0 loop
         for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
+        end loop;
 
         -- input number
         frame := make_frame("000000000", TO_SIGNED(45, 9), "0000", '0', '0');
@@ -110,8 +108,10 @@ begin
 
         -- Third digit ----------------------------------------------------------------------------
         -- mouse move
-        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        frame := make_frame(TO_SIGNED(255, 9), "000000000", "0000", '0', '0');
+        for x in 6  downto 0 loop
         for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
+        end loop;
 
         -- input number
         frame := make_frame("000000000", TO_SIGNED(45, 9), "0000", '0', '0');
@@ -121,14 +121,18 @@ begin
 
         -- Fourth digit ---------------------------------------------------------------------------
         -- mouse move
-        frame := make_frame(TO_SIGNED(165, 9), "000000000", "0000", '0', '0');
+        frame := make_frame(TO_SIGNED(255, 9), "000000000", "0000", '0', '0');
+        for x in 6  downto 0 loop
         for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
+        end loop;
 
         -- input number
         frame := make_frame("000000000", TO_SIGNED(45, 9), "0000", '0', '0');
         for i in 8 to 0 loop
             for i in 43 downto 0 loop wait for 16.5 ns; ps2_data_i <= frame(i); end loop;
         end loop;
+
+        wait for 66 ns;
 
         finish;
     end process;
