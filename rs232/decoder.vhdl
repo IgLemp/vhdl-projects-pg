@@ -12,8 +12,8 @@ entity decoder is
         rst_i : in STD_LOGIC;
         RXD_i : in STD_LOGIC;
 
-        recv_o :     out STD_LOGIC_VECTOR (7 downto 0);
-        recv_ready : out STD_LOGIC
+        recv_o :       out STD_LOGIC_VECTOR (7 downto 0);
+        recv_ready_o : out STD_LOGIC
     );
 end entity;
 
@@ -34,8 +34,8 @@ architecture decoder of decoder is
     type STATE_T is (IDLE, START, WORKING, STOP);
     signal state : STATE_T := IDLE;
 begin
-    process (clk_i) begin
-        if falling_edge(rst_i) then
+    process (clk_i, rst_i) begin
+        if rst_i = '1' then
             RXD_b <= '0';
             RXD_s <= '0';
         elsif falling_edge(clk_i) then

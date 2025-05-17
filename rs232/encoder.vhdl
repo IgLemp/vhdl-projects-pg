@@ -12,8 +12,8 @@ entity encoder is
         rst_i : in STD_LOGIC;
         TXD_o : out STD_LOGIC;
 
-        send_i :     in STD_LOGIC_VECTOR (7 downto 0);
-        send_ready : in STD_LOGIC
+        send_i :       in STD_LOGIC_VECTOR (7 downto 0);
+        send_ready_i : in STD_LOGIC
     );
 end entity;
 
@@ -29,8 +29,8 @@ architecture encoder of encoder is
 
     signal send_ready_p : STD_LOGIC := '1';
 begin
-    process (clk_i) begin
-        if falling_edge(rst_i) then
+    process (clk_i, rst_i) begin
+        if rst_i = '1' then
             TXD_o <= '1';
             send_ready_p <= '0';
         elsif falling_edge(clk_i) then
