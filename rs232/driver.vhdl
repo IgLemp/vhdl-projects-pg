@@ -36,7 +36,7 @@ begin
 
             -- Calculate the value and save to buffer
             if (state = CALC) then
-                data_b <= std_logic_vector(unsigned(recv_i) + signed(16#20#, 8), 8)
+                data_b <= std_logic_vector(unsigned(recv_i) + unsigned(16#20#, 8), 8)
                 state <= SEND;
             end if;
 
